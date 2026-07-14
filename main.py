@@ -143,7 +143,7 @@ if signal["signal"] == "NONE":
         return
 
     # Risk management rules from the strategy request.
-    order_result = place_order(signal["signal"], signal["price"], stop_loss_pct=0.02, take_profit_pct=0.07)
+order_result = place_order(signal["signal"], signal["price"], stop_loss_pct=0.02, take_profit_pct=0.07)
     print(order_result)
 
 
