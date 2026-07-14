@@ -138,25 +138,27 @@ def main() -> None:
     print(f"Señal detectada: {signal['signal']}")
     print(f"Razón: {signal['reason']}")
     print(f"Precio actual: {signal['price']:.2f}")
-if signal["signal"] == "NONE":
+
+    if signal["signal"] == "NONE":
         print("Ciclo finalizado sin operaciones. Entrando en espera de 1 hora...")
         return
 
     # Risk management rules from the strategy request.
-order_result = place_order(signal["signal"], signal["price"], stop_loss_pct=0.02, take_profit_pct=0.07)
-print(order_result)
+    order_result = place_order(signal["signal"], signal["price"], stop_loss_pct=0.02, take_profit_pct=0.07)
+    print(order_result)
 
 
 if __name__ == "__main__":
     import time
+
     print("¡Bot iniciado con éxito en modo continuo!")
-    
+
     while True:
         try:
             main()
             print("Análisis por hora completado. Esperando 1 hora para el siguiente...")
         except Exception as e:
             print(f"Error inesperado en el ciclo: {e}")
-            
+
         # Duerme el script por 3600 segundos (1 hora) manteniendo el servidor de Render activo
         time.sleep(3600)
