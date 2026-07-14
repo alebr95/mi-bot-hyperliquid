@@ -128,6 +128,7 @@ def place_order(signal: str, entry_price: float, stop_loss_pct: float = 0.02, ta
 
 def main() -> None:
     print("Conectando con Hyperliquid para el análisis ETH 1H...")
+
     try:
         candles = fetch_hourly_candles("ETH", interval="1h", lookback=250)
     except Exception as exc:
@@ -143,8 +144,12 @@ def main() -> None:
         print("Ciclo finalizado sin operaciones. Entrando en espera de 1 hora...")
         return
 
-    # Risk management rules from the strategy request.
-    order_result = place_order(signal["signal"], signal["price"], stop_loss_pct=0.02, take_profit_pct=0.07)
+    order_result = place_order(
+        signal["signal"],
+        signal["price"],
+        stop_loss_pct=0.02,
+        take_profit_pct=0.07,
+    )
     print(order_result)
 
 
@@ -160,5 +165,4 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error inesperado en el ciclo: {e}")
 
-        # Duerme el script por 3600 segundos (1 hora) manteniendo el servidor de Render activo
         time.sleep(3600)
