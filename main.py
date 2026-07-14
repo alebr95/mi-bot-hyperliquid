@@ -138,8 +138,8 @@ def main() -> None:
     print(f"Señal detectada: {signal['signal']}")
     print(f"Razón: {signal['reason']}")
     print(f"Precio actual: {signal['price']:.2f}")
-
-    if signal["signal"] == "NONE":
+if signal["signal"] == "NONE":
+        print("Ciclo finalizado sin operaciones. Entrando en espera de 1 hora...")
         return
 
     # Risk management rules from the strategy request.
@@ -148,4 +148,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import time
+    print("¡Bot iniciado con éxito en modo continuo!")
+    
+    while True:
+        try:
+            main()
+            print("Análisis por hora completado. Esperando 1 hora para el siguiente...")
+        except Exception as e:
+            print(f"Error inesperado en el ciclo: {e}")
+            
+        # Duerme el script por 3600 segundos (1 hora) manteniendo el servidor de Render activo
+        time.sleep(3600)
