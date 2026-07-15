@@ -178,12 +178,9 @@ def run_web_server(port: int) -> None:
             print("Servidor web detenido.")
 
 
-if __name__ == '__main__':
-    print("Ejecutando main() una sola vez...")
-
+if __name__ == "__main__":
+    print("Iniciando análisis de mercado en Hyperliquid...")
     try:
         main()
     except Exception as e:
         print(f"Error inesperado durante la ejecución: {e}")
-
-    run_web_server(RENDER_PORT)
