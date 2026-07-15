@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any, Dict, List
 
 import requests
 
@@ -10,6 +11,18 @@ import requests
 HYPERLIQUID_INFO_URL = os.getenv("HYPERLIQUID_INFO_URL", "https://api.hyperliquid.xyz/info")
 HYPERLIQUID_PRIVATE_KEY = os.getenv("HYPERLIQUID_PRIVATE_KEY", "")
 HYPERLIQUID_ADDRESS = os.getenv("HYPERLIQUID_ADDRESS", "")
+RENDER_PORT = int(os.getenv("PORT", "10000"))
+
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"OK\n")
+
+    def log_message(self, format: str, *args: Any) -> None:
+        return
 
 
 def fetch_hourly_candles(coin: str = "ETH", interval: str = "1h", lookback: int = 250) -> List[Dict[str, Any]]:
@@ -114,8 +127,6 @@ def place_order(signal: str, entry_price: float, stop_loss_pct: float = 0.02, ta
             "Set HYPERLIQUID_PRIVATE_KEY and HYPERLIQUID_ADDRESS as environment variables before trading."
         )
 
-    # TODO: implement actual Hyperliquid order signing and submission here.
-    # This placeholder keeps the bot structure clear and safe.
     return {
         "status": "simulated",
         "signal": signal,
@@ -141,7 +152,7 @@ def main() -> None:
     print(f"Precio actual: {signal['price']:.2f}")
 
     if signal["signal"] == "NONE":
-        print("Ciclo finalizado sin operaciones. Entrando en espera de 1 hora...")
+        print("Ciclo finalizado sin operaciones. Terminando ejecución.")
         return
 
     order_result = place_order(
@@ -153,16 +164,26 @@ def main() -> None:
     print(order_result)
 
 
-if __name__ == "__main__":
-    import time
+def run_web_server(port: int) -> None:
+    server_address = ("", port)
 
-    print("¡Bot iniciado con éxito en modo continuo!")
-
-    while True:
+    with ThreadingHTTPServer(server_address, HealthHandler) as httpd:
+        print(f"Servidor web activo en el puerto {port}")
         try:
-            main()
-            print("Análisis por hora completado. Esperando 1 hora para el siguiente...")
-        except Exception as e:
-            print(f"Error inesperado en el ciclo: {e}")
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            httpd.server_close()
+            print("Servidor web detenido.")
 
-        time.sleep(3600)
+
+if __name__ == '__main__':
+    print("Ejecutando main() una sola vez...")
+
+    try:
+        main()
+    except Exception as e:
+        print(f"Error inesperado durante la ejecución: {e}")
+
+    run_web_server(RENDER_PORT)
