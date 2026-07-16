@@ -181,11 +181,24 @@ def run_web_server(port: int) -> None:
 
 if __name__ == "__main__":
     while True:
-        print("Iniciando análisis de mercado en Hyperliquid...")
+        # 1. Calculamos cuántos minutos faltan para la siguiente hora en punto
+        ahora = datetime.now(timezone.utc)
+        minutos_restantes = 60 - ahora.minute
+        segundos_restantes = 60 - ahora.second
+        
+        # Si faltan minutos para la hora en punto, el bot espera pacientemente
+        if ahora.minute != 0:
+            tiempo_espera = ((minutos_restantes - 1) * 60) + segundos_restantes
+            print(f"Sincronizando reloj. Esperando {tiempo_espera} segundos hasta la hora en punto...")
+            time.sleep(tiempo_espera)
+            
+        # 2. Ya es la hora en punto (:00), iniciamos el análisis
+        print("¡Hora en punto detectada! Iniciando análisis de mercado en Hyperliquid...")
         try:
-            main()  # Ejecuta tu estrategia de trading
+            main()  # Tu estrategia de trading
         except Exception as e:
             print(f"Error en la ejecución: {e}")
         
+        # 3. Esperamos 1 hora exacta para el cierre de la siguiente vela
         print("Ciclo completado. Esperando 1 hora para el siguiente análisis...")
         time.sleep(3600)
