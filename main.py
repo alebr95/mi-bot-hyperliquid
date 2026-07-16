@@ -1,4 +1,5 @@
 import time
+import threading
 import os
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -179,26 +180,37 @@ def run_web_server(port: int) -> None:
             print("Servidor web detenido.")
 
 
+def arrancar_servidor_render():
+    try:
+        # Esto arranca el servidor web en el puerto que pide Render para que sea gratis
+        puerto = int(os.environ.get("PORT", 10000))
+        servidor = ThreadingHTTPServer(("0.0.0.0", puerto), HealthHandler)
+        print(f"Servidor de Render activo en el puerto {puerto}")
+        servidor.serve_forever()
+    except Exception as e:
+        print(f"No se pudo arrancar el servidor de Render (No importa si estás en local): {e}")
+
 if __name__ == "__main__":
+    # 1. Arrancamos el servidor de Render de fondo para que no moleste ni dé Timed Out
+    t = threading.Thread(target=arrancar_servidor_render, daemon=True)
+    t.start()
+
+    # 2. Tu bot normal con su sincronización a la hora cero
     while True:
-        # 1. Calculamos cuántos minutos faltan para la siguiente hora en punto
         ahora = datetime.now(timezone.utc)
         minutos_restantes = 60 - ahora.minute
         segundos_restantes = 60 - ahora.second
         
-        # Si faltan minutos para la hora en punto, el bot espera pacientemente
         if ahora.minute != 0:
             tiempo_espera = ((minutos_restantes - 1) * 60) + segundos_restantes
             print(f"Sincronizando reloj. Esperando {tiempo_espera} segundos hasta la hora en punto...")
             time.sleep(tiempo_espera)
             
-        # 2. Ya es la hora en punto (:00), iniciamos el análisis
         print("¡Hora en punto detectada! Iniciando análisis de mercado en Hyperliquid...")
         try:
-            main()  # Tu estrategia de trading
+            main()  # Tu estrategia
         except Exception as e:
             print(f"Error en la ejecución: {e}")
         
-        # 3. Esperamos 1 hora exacta para el cierre de la siguiente vela
         print("Ciclo completado. Esperando 1 hora para el siguiente análisis...")
         time.sleep(3600)
