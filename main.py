@@ -179,8 +179,12 @@ def run_web_server(port: int) -> None:
 
 
 if __name__ == "__main__":
-    print("Iniciando análisis de mercado en Hyperliquid...")
-    try:
-        main()
-    except Exception as e:
-        print(f"Error inesperado durante la ejecución: {e}")
+    while True:
+        print("Iniciando análisis de mercado en Hyperliquid...")
+        try:
+            main()  # Ejecuta tu estrategia de trading
+        except Exception as e:
+            print(f"Error en la ejecución: {e}")
+        
+        print("Ciclo completado. Esperando 1 hora para el siguiente análisis...")
+        time.sleep(3600)
