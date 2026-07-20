@@ -74,45 +74,65 @@ def ema_series(values: List[float], period: int) -> List[float]:
 
 
 def detect_signal(candles: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Return a trading signal based on EMA crosses and volume confirmation."""
+    """Réplica exacta del Pine Script: Bot ETH Hyper Optimized V3 - Gemini"""
     closes = [float(candle["c"]) for candle in candles if candle.get("c") is not None]
     volumes = [float(candle.get("v", 0) or 0) for candle in candles]
 
     if len(closes) < 210:
         return {"signal": "NONE", "reason": "Not enough candles for EMA 200"}
 
+    # --- INDICADORES ---
     ema9 = ema_series(closes, 9)
     ema21 = ema_series(closes, 21)
     ema200 = ema_series(closes, 200)
 
-    window = min(20, len(volumes))
-    avg_volume = sum(volumes[-window:]) / window
-    current_hour = datetime.now(timezone.utc).hour
-    in_trading_window = 6 <= current_hour < 18
+    # media_volumen = ta.sma(volume, periodos_vol) -> 20 periodos
+    window = 20
+    media_volumen = sum(volumes[-window:]) / window if len(volumes) >= window else 0
 
+    # --- DATOS ACTUALES Y PREVIOS ---
     latest_close = closes[-1]
-    current_ema9 = ema9[-1]
-    current_ema21 = ema21[-1]
-    current_ema200 = ema200[-1]
-    prev_ema9 = ema9[-2]
-    prev_ema21 = ema21[-2]
+    latest_volume = volumes[-1]
+    
+    v_ema_rapida = ema9[-1]
+    v_ema_lenta = ema21[-1]
+    v_ema_filtro = ema200[-1]
 
-    volume_confirmed = volumes[-1] > avg_volume * 1.2
-    trend_bullish = current_ema21 > current_ema200 and latest_close > current_ema200
-    trend_bearish = current_ema21 < current_ema200 and latest_close < current_ema200
+    prev_ema_rapida = ema9[-2]
+    prev_ema_lenta = ema21[-2]
 
-    if in_trading_window and volume_confirmed and current_ema9 > current_ema21 and prev_ema9 <= prev_ema21 and trend_bullish:
+    # --- FILTROS DE PINE SCRIPT ---
+    current_hour = datetime.now(timezone.utc).hour
+    
+    # permitir_operar = (hour >= hora_inicio and hour <= hora_fin)
+    permitir_operar = (6 <= current_hour <= 18)  
+    
+    # volumen_alto = volume > media_volumen
+    volumen_alto = latest_volume > media_volumen 
+    
+    # tendencia_alcista = close > v_ema_filtro / tendencia_bajista = close < v_ema_filtro
+    tendencia_alcista = latest_close > v_ema_filtro
+    tendencia_bajista = latest_close < v_ema_filtro
+
+    # --- CONDICIONES (ta.crossover y ta.crossunder) ---
+    crossover = (v_ema_rapida > v_ema_lenta) and (prev_ema_rapida <= prev_ema_lenta)
+    crossunder = (v_ema_rapida < v_ema_lenta) and (prev_ema_rapida >= prev_ema_lenta)
+
+    condicion_long = crossover and volumen_alto and tendencia_alcista and permitir_operar
+    condicion_short = crossunder and volumen_alto and tendencia_bajista and permitir_operar
+
+    if condicion_long:
         return {
             "signal": "LONG",
             "price": latest_close,
-            "reason": "EMA 9/21 bullish cross with trend confirmation and high volume",
+            "reason": "Long ETH: Crossover EMA 9/21, volumen alto y tendencia alcista (Pine Script Match)",
         }
 
-    if in_trading_window and volume_confirmed and current_ema9 < current_ema21 and prev_ema9 >= prev_ema21 and trend_bearish:
+    if condicion_short:
         return {
             "signal": "SHORT",
             "price": latest_close,
-            "reason": "EMA 9/21 bearish cross with trend confirmation and high volume",
+            "reason": "Short ETH: Crossunder EMA 9/21, volumen alto y tendencia bajista (Pine Script Match)",
         }
 
     return {
