@@ -1,1 +1,5 @@
-requests>=2.31.0
+flask
+requests
+hyperliquid-python-sdk
+eth-account
+gunicorn
