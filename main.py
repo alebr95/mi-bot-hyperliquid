@@ -19,14 +19,21 @@ def health_check():
 def webhook():
     try:
         data = request.get_json(force=True)
-        print("\n==========================================")
-        print("¡ALERTA RECIBIDA DESDE TRADINGVIEW!")
-        print(f"Datos recibidos: {json.dumps(data, indent=2)}")
-        print("==========================================\n")
+        if not data:
+            return jsonify({"status": "error", "message": "No JSON payload"}), 400
 
-        action = data.get("action", "").upper()
-        ticker = data.get("ticker", "ETH").replace("PERP", "").replace("USDT", "")
-        
+        # Normalizamos la acción a mayúsculas ('sell' -> 'SELL', 'buy' -> 'BUY')
+        action = str(data.get("action", "")).upper()
+
+        # Limpiamos el ticker (convierte 'ETHUSDC.P', 'ETHUSDT', etc. en solo 'ETH')
+        raw_ticker = str(data.get("ticker", "ETH"))
+        ticker = raw_ticker.split('.')[0].replace("USDC", "").replace("USDT", "").replace("USD", "").strip()
+
+        print(f"==========================================")
+        print(f"¡ALERTA RECIBIDA DESDE TRADINGVIEW!")
+        print(f"Acción procesada: {action} | Ticker procesado: {ticker}")
+        print(f"==========================================")
+
         # Conexión con Hyperliquid si hay claves configuradas
         if SECRET_KEY and ACCOUNT_ADDRESS:
             account = Account.from_key(SECRET_KEY)
@@ -34,28 +41,27 @@ def webhook():
 
             if action in ["BUY", "LONG"]:
                 print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...")
-                # Ejemplo de orden a mercado por $10 USD
-                # (Ajustable a tu tamaño de posición preferido)
                 res = exchange.market_open(ticker, is_buy=True, sz=0.005, px=None, slippage=0.01)
                 print(f"Resultado de la orden: {res}")
 
             elif action in ["SELL", "SHORT"]:
-                print(f"🔻 Ejecutando SHORT en Hyperliquid para {ticker}...")
+                print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...")
                 res = exchange.market_open(ticker, is_buy=False, sz=0.005, px=None, slippage=0.01)
                 print(f"Resultado de la orden: {res}")
 
             elif action in ["EXIT", "CLOSE"]:
-                print(f"🛑 Cerrando posición para {ticker}...")
+                print(f"⚠️ Cerrando posición para {ticker}...")
                 res = exchange.market_close(ticker)
                 print(f"Resultado del cierre: {res}")
-        else:
-            print("⚠️ Alerta recibida correctamente en MODO SIMULACIÓN (sin claves API configuradas en Render).")
 
-        return jsonify({"status": "success", "message": "Alerta procesada"}), 200
+            else:
+                print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}")
+
+        return jsonify({"status": "success", "message": "Alerta procesada correctamente"}), 200
 
     except Exception as e:
         print(f"❌ Error al procesar la orden: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 400
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
