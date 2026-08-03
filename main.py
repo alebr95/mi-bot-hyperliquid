@@ -1,5 +1,5 @@
 import os
-import json
+import sys
 from flask import Flask, request, jsonify
 from hyperliquid.utils import constants
 from hyperliquid.exchange import Exchange
@@ -29,10 +29,10 @@ def webhook():
         raw_ticker = str(data.get("ticker", "ETH"))
         ticker = raw_ticker.split('.')[0].replace("USDC", "").replace("USDT", "").replace("USD", "").strip()
 
-        print(f"==========================================")
-        print(f"¡ALERTA RECIBIDA DESDE TRADINGVIEW!")
-        print(f"Acción procesada: {action} | Ticker procesado: {ticker}")
-        print(f"==========================================")
+        print(f"==========================================", flush=True)
+        print(f"¡ALERTA RECIBIDA DESDE TRADINGVIEW!", flush=True)
+        print(f"Acción procesada: {action} | Ticker procesado: {ticker}", flush=True)
+        print(f"==========================================", flush=True)
 
         # Conexión con Hyperliquid si hay claves configuradas
         if SECRET_KEY and ACCOUNT_ADDRESS:
@@ -40,27 +40,27 @@ def webhook():
             exchange = Exchange(account, constants.MAINNET_API_URL)
 
             if action in ["BUY", "LONG"]:
-                print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...")
+                print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...", flush=True)
                 res = exchange.market_open(ticker, is_buy=True, sz=0.005, px=None, slippage=0.01)
-                print(f"Resultado de la orden: {res}")
+                print(f"Resultado de la orden: {res}", flush=True)
 
             elif action in ["SELL", "SHORT"]:
-                print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...")
+                print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...", flush=True)
                 res = exchange.market_open(ticker, is_buy=False, sz=0.005, px=None, slippage=0.01)
-                print(f"Resultado de la orden: {res}")
+                print(f"Resultado de la orden: {res}", flush=True)
 
             elif action in ["EXIT", "CLOSE"]:
-                print(f"⚠️ Cerrando posición para {ticker}...")
+                print(f"⚠️ Cerrando posición para {ticker}...", flush=True)
                 res = exchange.market_close(ticker)
-                print(f"Resultado del cierre: {res}")
+                print(f"Resultado del cierre: {res}", flush=True)
 
             else:
-                print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}")
+                print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}", flush=True)
 
         return jsonify({"status": "success", "message": "Alerta procesada correctamente"}), 200
 
     except Exception as e:
-        print(f"❌ Error al procesar la orden: {e}")
+        print(f"❌ Error al procesar la orden: {e}", flush=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
