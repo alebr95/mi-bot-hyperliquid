@@ -40,28 +40,28 @@ def webhook():
             exchange = Exchange(account, constants.MAINNET_API_URL)
 
             if action in ["BUY", "LONG"]:
-                print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...", flush=True)
-                xchange.market_open(ticker, is_buy=True, sz=0.01, px=None,
-                print(f"Resultado de la orden: {res}", flush=True)
+        print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...", flush=True)
+        res = exchange.market_open(ticker, is_buy=True, sz=0.01, px=None, slippage=0.01)
+        print(f"Resultado de la orden: {res}", flush=True)
 
-            elif action in ["SELL", "SHORT"]:
-                print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...", flush=True)
-                xchange.market_open(ticker, is_buy=False, sz=0.01, px=None,
-                print(f"Resultado de la orden: {res}", flush=True)
+    elif action in ["SELL", "SHORT"]:
+        print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...", flush=True)
+        res = exchange.market_open(ticker, is_buy=False, sz=0.01, px=None, slippage=0.01)
+        print(f"Resultado de la orden: {res}", flush=True)
 
-            elif action in ["EXIT", "CLOSE"]:
-                print(f"⚠️ Cerrando posición para {ticker}...", flush=True)
-                res = exchange.market_close(ticker)
-                print(f"Resultado del cierre: {res}", flush=True)
+    elif action in ["EXIT", "CLOSE"]:
+        print(f"⚠️ Cerrando posición para {ticker}...", flush=True)
+        res = exchange.market_close(ticker)
+        print(f"Resultado del cierre: {res}", flush=True)
 
-            else:
-                print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}", flush=True)
+    else:
+        print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}", flush=True)
 
-        return jsonify({"status": "success", "message": "Alerta procesada correctamente"}), 200
+    return jsonify({"status": "success", "message": "Alerta procesada correctamente"}), 200
 
-    except Exception as e:
-        print(f"❌ Error al procesar la orden: {e}", flush=True)
-        return jsonify({"status": "error", "message": str(e)}), 500
+except Exception as e:
+    print(f"❌ Error al procesar la orden: {e}", flush=True)
+    return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
