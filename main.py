@@ -41,12 +41,12 @@ def webhook():
 
             if action in ["BUY", "LONG"]:
                 print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...", flush=True)
-                res = exchange.market_open(ticker, is_buy=True, sz=0.005, px=None, slippage=0.01)
+                xchange.market_open(ticker, is_buy=True, sz=0.01, px=None,
                 print(f"Resultado de la orden: {res}", flush=True)
 
             elif action in ["SELL", "SHORT"]:
                 print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...", flush=True)
-                res = exchange.market_open(ticker, is_buy=False, sz=0.005, px=None, slippage=0.01)
+                xchange.market_open(ticker, is_buy=False, sz=0.01, px=None,
                 print(f"Resultado de la orden: {res}", flush=True)
 
             elif action in ["EXIT", "CLOSE"]:
