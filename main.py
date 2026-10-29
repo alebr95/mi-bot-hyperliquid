@@ -1,8 +1,10 @@
 import os
 import threading
+import time
 from flask import Flask, request, jsonify
 from eth_account import Account
 from hyperliquid.exchange import Exchange
+from hyperliquid.info import Info
 from hyperliquid.utils import constants
 
 app = Flask(__name__)
@@ -14,20 +16,37 @@ ACCOUNT_ADDRESS = os.environ.get("HYPERLIQUID_ADDRESS", "")
 @app.route("/", methods=['GET'])
 def health_check():
     return "Bot de webhooks activo y listo en Render.", 200
+
 def procesar_orden_hyperliquid(action, ticker):
     try:
-        # Conexión con Hyperliquid si hay claves configuradas
         if SECRET_KEY and ACCOUNT_ADDRESS:
             account = Account.from_key(SECRET_KEY)
-            exchange = Exchange(account, constants.MAINNET_API_URL)
+            info = Info(constants.MAINNET_API_URL, skip_ws=True)
+            exchange = Exchange(account, constants.MAINNET_API_URL, account_address=ACCOUNT_ADDRESS)
 
             if action in ["BUY", "LONG"]:
-                print(f"🚀 Ejecutando LONG en Hyperliquid para {ticker}...", flush=True)
+                print(f"🔄 Cerrando posición previa de {ticker} si existe...", flush=True)
+                try:
+                    res_close = exchange.market_close(ticker)
+                    print(f"Resultado cierre previo: {res_close}", flush=True)
+                    time.sleep(0.5)
+                except Exception as e_close:
+                    print(f"No había posición previa o error al cerrar: {e_close}", flush=True)
+
+                print(f"🚀 Ejecutando LONG limpio en Hyperliquid para {ticker}...", flush=True)
                 res = exchange.market_open(ticker, is_buy=True, sz=0.04, px=None, slippage=0.01)
                 print(f"Resultado de la orden: {res}", flush=True)
 
             elif action in ["SELL", "SHORT"]:
-                print(f"📉 Ejecutando SHORT en Hyperliquid para {ticker}...", flush=True)
+                print(f"🔄 Cerrando posición previa de {ticker} si existe...", flush=True)
+                try:
+                    res_close = exchange.market_close(ticker)
+                    print(f"Resultado cierre previo: {res_close}", flush=True)
+                    time.sleep(0.5)
+                except Exception as e_close:
+                    print(f"No había posición previa o error al cerrar: {e_close}", flush=True)
+
+                print(f"📉 Ejecutando SHORT limpio en Hyperliquid para {ticker}...", flush=True)
                 res = exchange.market_open(ticker, is_buy=False, sz=0.04, px=None, slippage=0.01)
                 print(f"Resultado de la orden: {res}", flush=True)
 
@@ -38,9 +57,9 @@ def procesar_orden_hyperliquid(action, ticker):
 
             else:
                 print(f"⚠️ Acción no reconocida o en MODO SIMULACIÓN: {action}", flush=True)
+
     except Exception as e:
         print(f"❌ Error al procesar la orden en Hyperliquid: {e}", flush=True)
-
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
